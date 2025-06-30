@@ -1,0 +1,8 @@
+python-telegram-bot==20.7
+python-dotenv
+PyMuPDF==1.23.19
+python-docx
+requests
+langchain==0.1.14
+faiss-cpu==1.7.4
+sentence-transformers
