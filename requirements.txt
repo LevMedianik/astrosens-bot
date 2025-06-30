@@ -1,6 +1,6 @@
 python-telegram-bot==20.7
 python-dotenv
-PyMuPDF==1.23.19
+pdfminer.six
 python-docx
 requests
 langchain==0.1.14
