@@ -1,5 +1,5 @@
 import os
-import fitz
+from pdfminer.high_level import extract_text
 import docx
 from uuid import uuid4
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -28,11 +28,7 @@ def save_file(file_bytes, original_filename):
 
 # Извлечение текста из PDF
 def extract_text_from_pdf(filepath):
-    doc = fitz.open(filepath)
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    return text
+    return extract_text(filepath)
 
 # Извлечение текста из DOCX
 def extract_text_from_docx(filepath):
