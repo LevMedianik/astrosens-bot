@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from astro_pdf_handler import save_file, extract_text_from_file, index_text_with_faiss, query_index, summarize_pdf
-from gdrive_handler import list_gdrive_files, download_and_index_file
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -135,27 +134,6 @@ async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Контекст уже пуст.")
 
-async def gdrive_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    files = list_gdrive_files()
-    if not files:
-        await update.message.reply_text("На Google Диске нет доступных файлов.")
-        return
-
-    msg = "\n".join([f"{name} — ID: `{fid}`" for name, fid in files])
-    await update.message.reply_text("Ваши файлы в Google Диске:\n\n" + msg, parse_mode='Markdown')
-
-async def gdrive_download(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Укажите ID файла. Пример:\n`/gdrive_download 1AbcDefGhIj...`", parse_mode='Markdown')
-        return
-    file_id = context.args[0]
-
-    try:
-        filename = download_and_index_file(file_id)
-        await update.message.reply_text(f"Файл *{filename}* загружен и проиндексирован.\nИспользуйте /askfile для вопросов или /summary для краткого пересказа.", parse_mode='Markdown')
-    except Exception as e:
-        await update.message.reply_text(f"Ошибка загрузки: {e}")
-
 # Запуск бота
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
@@ -171,8 +149,6 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("reset", reset_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.add_handler(CommandHandler("gdrive_list", gdrive_list))
-    app.add_handler(CommandHandler("gdrive_download", gdrive_download))
     
     print("AstroSens работает. Ждите сообщений в Telegram.")
     app.run_polling()
