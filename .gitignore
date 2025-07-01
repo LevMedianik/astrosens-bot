@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+.venv/
+venv/
+.env
+*.env
+
+# Logs and temp
+*.log
+*.tmp
+*.bak
+
+# FAISS index
+faiss_index/
+*.faiss
+
+# OS and IDE metadata
+.DS_Store
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Pytest cache
+.pytest_cache/
