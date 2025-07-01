@@ -1,10 +1,5 @@
 PyMuPDF
-docx
-dotenv
+python-telegram-bot
 langchain
-langchain_community
-langchain_huggingface
-requests
-shutil
-telegram
-uuid
+tiktoken
+faiss-cpu
