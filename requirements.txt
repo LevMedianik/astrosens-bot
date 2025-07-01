@@ -1,5 +1,5 @@
-PyMuPDF
-python-telegram-bot
-langchain
-tiktoken
-faiss-cpu
+python-telegram-bot==20.7
+openai
+PyMuPDF==1.26.1
+faiss-cpu==1.7.4
+python-dotenv
