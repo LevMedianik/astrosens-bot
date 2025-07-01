@@ -1,0 +1,11 @@
+PyMuPDF
+astro_pdf_handler
+docx
+dotenv
+langchain
+langchain_community
+langchain_huggingface
+requests
+shutil
+telegram
+uuid
