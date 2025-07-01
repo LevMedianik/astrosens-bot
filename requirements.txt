@@ -1,5 +1,4 @@
 PyMuPDF
-astro_pdf_handler
 docx
 dotenv
 langchain
