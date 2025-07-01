@@ -1,5 +1,8 @@
-python-telegram-bot==20.7
-openai
-PyMuPDF==1.26.1
-faiss-cpu==1.7.4
+python-telegram-bot
 python-dotenv
+PyMuPDF
+requests
+langchain
+langchain_community
+langchain_huggingface
+docx
