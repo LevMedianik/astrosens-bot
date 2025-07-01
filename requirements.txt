@@ -5,4 +5,4 @@ requests
 langchain
 langchain_community
 langchain_huggingface
-docx
+python-docx
