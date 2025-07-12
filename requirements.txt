@@ -1,7 +1,14 @@
-python-telegram-bot==20.6
-python-dotenv
-requests
 PyMuPDF
+astro_pdf_handler
+docx
+dotenv
+langchain
+langchain_community
+langchain_huggingface
+requests
+shutil
+telegram
+uuid
 python-docx
 google-auth
 google-auth-oauthlib
