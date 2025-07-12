@@ -1,51 +1,43 @@
 import os
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+from googleapiclient.http import MediaIoBaseDownload
+from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 
-# Хранение ключа
-if not os.path.exists('credentials.json'):
-    with open('credentials.json', 'w') as f:
-        f.write(os.getenv('GOOGLE_CREDENTIALS_JSON'))
+# Запуск OAuth flow для конкретного пользователя
+def start_flow(user_id):
+    flow = Flow.from_client_secrets_file(
+        'credentials.json',
+        scopes=['https://www.googleapis.com/auth/drive.readonly'],
+        redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+    )
+    auth_url, _ = flow.authorization_url(prompt='consent')
+    return flow, auth_url
 
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-CREDENTIALS_FILE = 'credentials.json'
+# Завершение OAuth flow
+def finish_flow(flow, code):
+    flow.fetch_token(code=code)
+    creds = flow.credentials
+    return build('drive', 'v3', credentials=creds)
 
-# Аутентификация пользователя
-def authenticate_gdrive(user_id: int):
-    creds = None
-    token_path = f"tokens/{user_id}.json"
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(token_path, 'w') as token:
-            token.write(creds.to_json())
-    service = build('drive', 'v3', credentials=creds)
-    return service
-
-# Перечисление файлов из Диска
+# Получение списка файлов
 def list_files(service):
     results = service.files().list(
         pageSize=10,
-        fields="files(id, name)",
-        q="mimeType='application/pdf' or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' or mimeType='text/plain'"
+        fields="files(id, name, mimeType)"
     ).execute()
     items = results.get('files', [])
-    return [(item['id'], item['name']) for item in items]
+    return [(item['id'], item['name']) for item in items if item['mimeType'] in [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'
+    ]]
 
-# Чтение файла
-def download_file(service, file_id, destination_path):
+# Загрузка выбранного файла
+def download_file(service, file_id, dest_path):
     request = service.files().get_media(fileId=file_id)
-    from googleapiclient.http import MediaIoBaseDownload
-    import io
-    fh = io.FileIO(destination_path, 'wb')
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while not done:
-        status, done = downloader.next_chunk()
+    with open(dest_path, 'wb') as f:
+        downloader = MediaIoBaseDownload(f, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
