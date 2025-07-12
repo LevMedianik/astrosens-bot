@@ -2,6 +2,9 @@ python-telegram-bot==20.6
 python-dotenv
 requests
 PyMuPDF
+langchain
+langchain_community
+langchain_huggingface
 python-docx
 google-auth
 google-auth-oauthlib
