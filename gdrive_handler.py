@@ -5,14 +5,11 @@ from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 
 # Запуск OAuth flow для конкретного пользователя
-def start_flow(user_id):
-    flow = Flow.from_client_secrets_file(
-        'credentials.json',
-        scopes=['https://www.googleapis.com/auth/drive.readonly'],
-        redirect_uri='urn:ietf:wg:oauth:2.0:oob'
-    )
-    auth_url, _ = flow.authorization_url(prompt='consent')
-    return flow, auth_url
+if not os.path.exists('credentials.json'):
+    creds_json = os.getenv('CREDENTIALS_JSON')
+    if creds_json:
+        with open('credentials.json', 'w') as f:
+            f.write(creds_json)
 
 # Завершение OAuth flow
 def finish_flow(flow, code):
