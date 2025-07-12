@@ -6,7 +6,7 @@ from google.oauth2.credentials import Credentials
 
 # Запуск OAuth flow для конкретного пользователя
 if not os.path.exists('credentials.json'):
-    creds_json = os.getenv('CREDENTIALS_JSON')
+    creds_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
     if creds_json:
         with open('credentials.json', 'w') as f:
             f.write(creds_json)
