@@ -7,6 +7,9 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from astro_pdf_handler import save_file, extract_text_from_file, index_text_with_faiss, query_index, summarize_pdf
 
+# Подключение к Google Drive
+from gdrive_handler import authenticate_gdrive, list_files, download_file
+from astro_pdf_handler import extract_text_from_file, index_text_with_faiss
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -32,7 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Я могу:\n"
         "• Отвечать на вопросы о жизни во Вселенной\n"
         "• Обсуждать спутники, экзопланеты и зарождение жизни\n"
-        "• Обрабатывать загруженные статьи и книги (PDF, DOCX, TXT)\n\n"
+        "• Обрабатывать загруженные статьи и книги (PDF, DOCX, TXT), в том числе из вашего Google Диска\n\n"
         "Просто задайте вопрос — и я постараюсь ответить по существу.\n"
         "Для справки введите /help."
     )
@@ -121,7 +124,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/help — Справка по командам\n"
         "/askfile [вопрос] — Задать вопрос по загруженному PDF/DOCX/TXT\n"
         "/summary — Краткое содержание загруженного файла\n"
-        "/reset — Сбросить контекст текущего файла для загрузки нового",
+        "/reset — Сбросить контекст текущего файла для загрузки нового\n"
+        "/syncdrive — Синхронизация с Google Диском",
         parse_mode='HTML'
     )
 
@@ -135,21 +139,60 @@ async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Контекст уже пуст.")
 
+# Хранить state
+drive_files = {}
+
+async def syncdrive(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🔗 Подключаюсь к вашему Google Диску...")
+    service = authenticate_gdrive(update.effective_user.id)
+    files = list_files(service)
+    if not files:
+        await update.message.reply_text("На вашем диске не найдено файлов PDF/DOCX/TXT.")
+        return
+    text = "📄 Найдены файлы:\n"
+    for fid, fname in files:
+        text += f"{fname} — ID: `{fid}`\n"
+        drive_files[fid] = fname
+    await update.message.reply_text(text + "\nСкопируйте ID файла из списка, чтобы его прочитать.", parse_mode='Markdown')
+    context.user_data['gdrive_service'] = service
+
+async def handle_drive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    file_id = update.message.text.strip()
+    if file_id not in drive_files:
+        await update.message.reply_text("❌ Файл с таким ID не найден. Попробуйте ещё раз.")
+        return
+    service = context.user_data.get('gdrive_service')
+    if not service:
+        await update.message.reply_text("Сначала выполните /syncdrive.")
+        return
+    filename = drive_files[file_id]
+    local_path = os.path.join('./data', filename)
+    download_file(service, file_id, local_path)
+    text = extract_text_from_file(local_path)
+    index_text_with_faiss(text)
+    await update.message.reply_text(f"✅ Файл {filename} загружен, проиндексирован и готов к запросам.\n"
+                                     "Теперь вы можете использовать команду /askfile для вопросов по тексту или /summary для краткого обзора.")
+
+
 # Запуск бота
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("askfile", askfile))
     app.add_handler(CommandHandler("summary", summary))
-    app.add_handler(MessageHandler(
-    filters.Document.MimeType("application/pdf") |
-    filters.Document.MimeType("application/vnd.openxmlformats-officedocument.wordprocessingml.document") |
-    filters.Document.MimeType("text/plain"),
-    handle_document
-))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("reset", reset_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
+    app.add_handler(CommandHandler("syncdrive", syncdrive))
+    app.add_handler(MessageHandler(
+        filters.Document.MimeType("application/pdf") |
+        filters.Document.MimeType("application/vnd.openxmlformats-officedocument.wordprocessingml.document") |
+        filters.Document.MimeType("text/plain"),
+        handle_document
+    ))
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        handle_drive_file
+    ))  # обработка ID из Google Drive
+
     print("AstroSens работает. Ждите сообщений в Telegram.")
     app.run_polling()
