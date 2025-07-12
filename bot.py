@@ -1,15 +1,11 @@
 import os
 import requests
 import re
-import shutil
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from astro_pdf_handler import save_file, extract_text_from_file, index_text_with_faiss, query_index, summarize_pdf
-
-# Подключение к Google Drive
-from gdrive_handler import authenticate_gdrive, list_files, download_file
-from astro_pdf_handler import extract_text_from_file, index_text_with_faiss
+from gdrive_handler import start_flow, finish_flow, list_files, download_file
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -141,34 +137,44 @@ async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Хранить state
 drive_files = {}
+pending_auth = {}
 
 async def syncdrive(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🔗 Подключаюсь к вашему Google Диску...")
-    service = authenticate_gdrive(update.effective_user.id)
+    flow, auth_url = start_flow(update.effective_user.id)
+    pending_auth[update.effective_user.id] = flow
+    await update.message.reply_text(f"Перейдите по ссылке и отправьте код:\n{auth_url}")
+
+async def handle_drive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in pending_auth:
+        await update.message.reply_text("Сначала выполните /syncdrive.")
+        return
+    code = update.message.text.strip()
+    flow = pending_auth.pop(user_id)
+    service = finish_flow(flow, code)
+    context.user_data['gdrive_service'] = service
     files = list_files(service)
     if not files:
-        await update.message.reply_text("На вашем диске не найдено файлов PDF/DOCX/TXT.")
+        await update.message.reply_text("На диске нет подходящих файлов.")
         return
-    text = "📄 Найдены файлы:\n"
+    msg = "📄 Найденные файлы:\n"
     for fid, fname in files:
-        text += f"{fname} — ID: `{fid}`\n"
-        drive_files[fid] = fname
-    await update.message.reply_text(text + "\nСкопируйте ID файла из списка, чтобы его прочитать.", parse_mode='Markdown')
-    context.user_data['gdrive_service'] = service
+        msg += f"{fname} — ID: `{fid}`\n"
+    msg += "\nСкопируйте ID файла и отправьте в чат для чтения."
+    context.user_data['drive_files'] = dict(files)
+    await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def handle_drive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_id = update.message.text.strip()
+    drive_files = context.user_data.get('drive_files', {})
     if file_id not in drive_files:
-        await update.message.reply_text("❌ Файл с таким ID не найден. Попробуйте ещё раз.")
+        await update.message.reply_text("ID не найден. Попробуйте снова.")
         return
-    service = context.user_data.get('gdrive_service')
-    if not service:
-        await update.message.reply_text("Сначала выполните /syncdrive.")
-        return
+    service = context.user_data['gdrive_service']
     filename = drive_files[file_id]
-    local_path = os.path.join('./data', filename)
-    download_file(service, file_id, local_path)
-    text = extract_text_from_file(local_path)
+    path = os.path.join('./data', filename)
+    download_file(service, file_id, path)
+    text = extract_text_from_file(path)
     index_text_with_faiss(text)
     await update.message.reply_text(f"✅ Файл {filename} загружен, проиндексирован и готов к запросам.\n"
                                      "Теперь вы можете использовать команду /askfile для вопросов по тексту или /summary для краткого обзора.")
@@ -180,8 +186,6 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("askfile", askfile))
     app.add_handler(CommandHandler("summary", summary))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("reset", reset_command))
     app.add_handler(CommandHandler("syncdrive", syncdrive))
     app.add_handler(MessageHandler(
         filters.Document.MimeType("application/pdf") |
@@ -189,10 +193,8 @@ if __name__ == '__main__':
         filters.Document.MimeType("text/plain"),
         handle_document
     ))
-    app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        handle_drive_file
-    ))  # обработка ID из Google Drive
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_drive_code))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_drive_file))
 
     print("AstroSens работает. Ждите сообщений в Telegram.")
     app.run_polling()
