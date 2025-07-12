@@ -1,40 +1,38 @@
 import os
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
 from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 
-# Запуск OAuth flow для конкретного пользователя
-if not os.path.exists('credentials.json'):
-    creds_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
-    if creds_json:
-        with open('credentials.json', 'w') as f:
-            f.write(creds_json)
+SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
-# Завершение OAuth flow
-def finish_flow(flow, code):
+def start_flow(user_id: int):
+    flow = Flow.from_client_secrets_file(
+        'credentials.json',
+        scopes=SCOPES,
+        redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+    )
+    auth_url, _ = flow.authorization_url(prompt='consent')
+    return flow, auth_url
+
+def finish_flow(flow: Flow, code: str):
     flow.fetch_token(code=code)
     creds = flow.credentials
-    return build('drive', 'v3', credentials=creds)
+    service = build('drive', 'v3', credentials=creds)
+    return service
 
-# Получение списка файлов
 def list_files(service):
     results = service.files().list(
         pageSize=10,
-        fields="files(id, name, mimeType)"
+        fields="files(id, name)",
+        q="mimeType='application/pdf' or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' or mimeType='text/plain'"
     ).execute()
     items = results.get('files', [])
-    return [(item['id'], item['name']) for item in items if item['mimeType'] in [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
-    ]]
+    return [(item['id'], item['name']) for item in items]
 
-# Загрузка выбранного файла
 def download_file(service, file_id, dest_path):
     request = service.files().get_media(fileId=file_id)
     with open(dest_path, 'wb') as f:
-        downloader = MediaIoBaseDownload(f, request)
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()
+        downloader = build('media', 'v1', credentials=service._http.credentials).media_request(
+            request, f
+        )
+        downloader.execute()
