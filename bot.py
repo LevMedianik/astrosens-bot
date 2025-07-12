@@ -199,8 +199,8 @@ if __name__ == '__main__':
     ))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("reset", reset_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_drive_code))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_drive_file))
+    app.add_handler(MessageHandler(filters.Regex(r"^\d{4,}$"), handle_drive_code))
+    app.add_handler(MessageHandler(filters.Regex(r"^[\w-]{10,}$"), handle_drive_file))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("AstroSens работает. Ждите сообщений в Telegram.")
