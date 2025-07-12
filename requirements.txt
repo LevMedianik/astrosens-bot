@@ -1,14 +1,7 @@
-PyMuPDF
-astro_pdf_handler
-docx
-dotenv
-langchain
-langchain_community
-langchain_huggingface
+python-telegram-bot==20.6
+python-dotenv
 requests
-shutil
-telegram
-uuid
+PyMuPDF
 python-docx
 google-auth
 google-auth-oauthlib
