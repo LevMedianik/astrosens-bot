@@ -193,8 +193,11 @@ if __name__ == '__main__':
         filters.Document.MimeType("text/plain"),
         handle_document
     ))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("reset", reset_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_drive_code))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_drive_file))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("AstroSens работает. Ждите сообщений в Telegram.")
     app.run_polling()
