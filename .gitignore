@@ -1,18 +1,12 @@
-# Python
 __pycache__/
-*.py[cod]
+*.pyc
 *.so
 
-# Virtual environments
 venv/
 .env
-*.env
+credentials.json
+tokens/
 
-# FAISS index
-faiss_index/
-*.faiss
-
-# OS / editor
 .DS_Store
 *.swp
 *.bak
@@ -21,10 +15,8 @@ faiss_index/
 .vscode/
 .idea/
 
-# Python test cache
+faiss_index/
+*.faiss
+
 .pytest_cache/
 .ipynb_checkpoints/
-
-# Google Drive
-credentials.json
-tokens/
