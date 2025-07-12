@@ -4,9 +4,15 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
+# Хранение ключа
+if not os.path.exists('credentials.json'):
+    with open('credentials.json', 'w') as f:
+        f.write(os.getenv('GOOGLE_CREDENTIALS_JSON'))
+
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 CREDENTIALS_FILE = 'credentials.json'
 
+# Аутентификация пользователя
 def authenticate_gdrive(user_id: int):
     creds = None
     token_path = f"tokens/{user_id}.json"
@@ -23,6 +29,7 @@ def authenticate_gdrive(user_id: int):
     service = build('drive', 'v3', credentials=creds)
     return service
 
+# Перечисление файлов из Диска
 def list_files(service):
     results = service.files().list(
         pageSize=10,
@@ -32,6 +39,7 @@ def list_files(service):
     items = results.get('files', [])
     return [(item['id'], item['name']) for item in items]
 
+# Чтение файла
 def download_file(service, file_id, destination_path):
     request = service.files().get_media(fileId=file_id)
     from googleapiclient.http import MediaIoBaseDownload
