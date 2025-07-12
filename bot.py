@@ -2,10 +2,12 @@ import os
 import requests
 import re
 from dotenv import load_dotenv
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from astro_pdf_handler import save_file, extract_text_from_file, index_text_with_faiss, query_index, summarize_pdf
 from gdrive_handler import start_flow, finish_flow, list_files, download_file
+
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -142,7 +144,9 @@ pending_auth = {}
 async def syncdrive(update: Update, context: ContextTypes.DEFAULT_TYPE):
     flow, auth_url = start_flow(update.effective_user.id)
     pending_auth[update.effective_user.id] = flow
-    await update.message.reply_text(f"Перейдите по ссылке и отправьте код:\n{auth_url}")
+    await update.message.reply_text(
+        f"Перейдите по ссылке и отправьте код:\n{auth_url}"
+    )
 
 async def handle_drive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
