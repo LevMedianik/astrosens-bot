@@ -6,6 +6,16 @@ from google.oauth2.credentials import Credentials
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 def start_flow(user_id: int):
+    # Если файла нет — создаём его из переменной окружения
+    if not os.path.exists('credentials.json'):
+        creds_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
+        if not creds_json:
+            raise FileNotFoundError(
+                "credentials.json не найден и GOOGLE_CREDENTIALS_JSON не задана в переменных окружения."
+            )
+        with open('credentials.json', 'w') as f:
+            f.write(creds_json)
+
     flow = Flow.from_client_secrets_file(
         'credentials.json',
         scopes=SCOPES,
