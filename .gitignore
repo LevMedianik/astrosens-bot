@@ -1,30 +1,30 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *.so
 
 # Virtual environments
-.venv/
 venv/
 .env
 *.env
-
-# Logs and temp
-*.log
-*.tmp
-*.bak
 
 # FAISS index
 faiss_index/
 *.faiss
 
-# OS and IDE metadata
+# OS / editor
 .DS_Store
+*.swp
+*.bak
+*.tmp
+*.log
 .vscode/
 .idea/
 
-# Jupyter
+# Python test cache
+.pytest_cache/
 .ipynb_checkpoints/
 
-# Pytest cache
-.pytest_cache/
+# Google Drive
+credentials.json
+tokens/
