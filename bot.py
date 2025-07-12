@@ -183,25 +183,34 @@ async def handle_drive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✅ Файл {filename} загружен, проиндексирован и готов к запросам.\n"
                                      "Теперь вы можете использовать команду /askfile для вопросов по тексту или /summary для краткого обзора.")
 
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    step = context.user_data.get("step")
 
-# Запуск бота
+    if step == "awaiting_auth_code":
+        await handle_drive_code(update, context)
+    elif step == "awaiting_file_id":
+        await handle_drive_file(update, context)
+    else:
+        await handle_message(update, context)
+
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("askfile", askfile))
     app.add_handler(CommandHandler("summary", summary))
     app.add_handler(CommandHandler("syncdrive", syncdrive))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("reset", reset_command))
+
     app.add_handler(MessageHandler(
         filters.Document.MimeType("application/pdf") |
         filters.Document.MimeType("application/vnd.openxmlformats-officedocument.wordprocessingml.document") |
         filters.Document.MimeType("text/plain"),
         handle_document
     ))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("reset", reset_command))
-    app.add_handler(MessageHandler(filters.Regex(r"^\d{4,}$"), handle_drive_code))
-    app.add_handler(MessageHandler(filters.Regex(r"^[\w-]{10,}$"), handle_drive_file))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     print("AstroSens работает. Ждите сообщений в Telegram.")
     app.run_polling()
