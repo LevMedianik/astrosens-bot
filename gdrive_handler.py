@@ -1,7 +1,9 @@
 import os
+import io
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+from googleapiclient.http import MediaIoBaseDownload
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
@@ -39,10 +41,10 @@ def list_files(service):
     items = results.get('files', [])
     return [(item['id'], item['name']) for item in items]
 
-def download_file(service, file_id, dest_path):
+def download_file(service, file_id, destination_path):
     request = service.files().get_media(fileId=file_id)
-    with open(dest_path, 'wb') as f:
-        downloader = build('media', 'v1', credentials=service._http.credentials).media_request(
-            request, f
-        )
-        downloader.execute()
+    fh = io.FileIO(destination_path, 'wb')
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        status, done = downloader.next_chunk()
