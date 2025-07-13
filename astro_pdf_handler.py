@@ -61,7 +61,7 @@ def index_text_with_faiss(text):
     chunks = splitter.split_text(text)
     documents = [Document(page_content=chunk) for chunk in chunks]
 
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-albert-small-v2")
     vectorstore = FAISS.from_documents(documents, embedding=embeddings)
     vectorstore.save_local(INDEX_DIR)
     return vectorstore
@@ -71,7 +71,7 @@ def load_existing_index():
     index_file = os.path.join(INDEX_DIR, "index.faiss")
     if not os.path.exists(index_file):
         return None
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-albert-small-v2")
     return FAISS.load_local(INDEX_DIR, embeddings, allow_dangerous_deserialization=True)
 
 # Настройки LLM
