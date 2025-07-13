@@ -1,22 +1,30 @@
+# Python
 __pycache__/
 *.pyc
-*.so
-
-venv/
-.env
-credentials.json
-tokens/
-
-.DS_Store
-*.swp
+*.pyo
+*.pyd
+*.log
 *.bak
 *.tmp
-*.log
-.vscode/
-.idea/
 
+# Virtual environments
+venv/
+.env
+*.env
+
+# FAISS index and temporary data
 faiss_index/
-*.faiss
+tokens/
+data/
 
-.pytest_cache/
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Jupyter
 .ipynb_checkpoints/
+
+# Other
+*.faiss
