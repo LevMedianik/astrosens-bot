@@ -1,17 +1,21 @@
+# Базовый имидж
 FROM python:3.11-slim
 
-# Установим зависимости системы
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc libgl1 \
+# Устанавливаем зависимости системы для PyMuPDF и FAISS
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
-# Рабочая директория
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы проекта
-COPY . .
-
-# Установим зависимости Python
+# Копируем только нужные файлы
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Копируем оставшийся код
+COPY . .
+
+# Указываем команду запуска
 CMD ["python", "bot.py"]
