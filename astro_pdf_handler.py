@@ -57,7 +57,7 @@ def extract_text_from_file(filepath):
 
 # Индексация текста
 def index_text_with_faiss(text):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=50)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=150, chunk_overlap=30)
     chunks = splitter.split_text(text)
     documents = [Document(page_content=chunk) for chunk in chunks]
 
