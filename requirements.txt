@@ -1,11 +1,8 @@
-python-telegram-bot==20.6
-PyMuPDF>=1.21.1
-python-docx>=1.1.0
-faiss-cpu>=1.7.3
-sentence-transformers>=2.2.2
-langchain>=0.0.208
+PyMuPDF
+python-docx
+python-dotenv
+langchain
 langchain_community
 langchain_huggingface
-openai>=0.27.8
-tiktoken>=0.4.0
-python-dotenv>=1.0.0
+requests
+python-telegram-bot
